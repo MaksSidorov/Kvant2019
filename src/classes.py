@@ -41,30 +41,6 @@ def add_user(name, age, login, passw, sex):
         login, passw, name, age, sex))
     conn.commit()
 
-    usering = sqlite3.connect('users/' + login + '.db')
-    userobj = usering.cursor()
-    userobj.execute("""
-			CREATE TABLE "inf" (
-				`id`    INTEGER PRIMARY KEY AUTOINCREMENT,
-				`dataa` TEXT,
-				`o1`    INTEGER,
-				`o2`    INTEGER,
-				`o3`    INTEGER,
-				`o4`    INTEGER,
-				`o5`    INTEGER,
-				`o6`    INTEGER,
-				`o7`    INTEGER,
-				`o8`    INTEGER,
-				`happy`    INTEGER,
-				`angry`    INTEGER,
-				`sad`    INTEGER,
-				`fear`    INTEGER,
-				`surprised`    INTEGER,
-				`disgust`    INTEGER
-			);""")
-    usering.commit()
-
-
 # Форма для входа
 class EntForm(QWidget):
     def __init__(self):
@@ -565,18 +541,15 @@ class Table(QWidget):
         palette = QPalette()
         palette.setBrush(10, QBrush(sImage))  # 10 = Windowrole
         self.setPalette(palette)
-        path = 'users/' + self.args[0] + '.db'
-        user = sqlite3.connect(path)
-        u = user.cursor()
-        u.execute(
-            "INSERT INTO inf (dataa, o1, o2, o3, o4, o5, o6, o7, o8, happy, angry, sad, fear, surprised, disgust) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
-                datetime.date.today(), *self.args[3]))
-        user.commit()
-        u.execute('SELECT * FROM inf')
-        row = u.fetchone()
+        c.execute(
+            "INSERT INTO inf (login, dataa, o1, o2, o3, o4, o5, o6, o7, o8, happy, angry, sad, fear, surprised, disgust) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
+                self.args[0], datetime.date.today(), *self.args[3]))
+        conn.commit()
+        c.execute('SELECT * FROM inf WHERE login = "{}"'.format(self.args[0]))
+        row = c.fetchone()
         while row is not None:
-            self.inform.append(list(row)[1:])
-            row = u.fetchone()
+            self.inform.append(list(row)[2:])
+            row = c.fetchone()
         self.tableWidget = QTableWidget(self)
         self.tableWidget.resizeColumnsToContents()
         self.tableWidget.setRowCount(len(self.inform))
@@ -614,15 +587,24 @@ class Table(QWidget):
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled
                     )
                     self.tableWidget.setItem(x, y, cellinfo)
-                    if self.inform[x][y] > 10:
+                    if self.inform[x][y] >= 10:
                         self.tableWidget.item(x, y).setBackground(QColor(0, 255, 0))
                     else:
                         self.tableWidget.item(x, y).setBackground(QColor(255, 255, 0))
         self.tableWidget.resizeColumnsToContents()
+        btn = QPushButton('На главную', self)
+        btn.move(1800, 920)
+        btn.resize(100, 50)
+        btn.clicked.connect(self.ret)
+
+    def ret(self):
+        self.new_form = MainMenu(self.args[0], self.args[1])
+        self.new_form.show()
+        self.close()
 
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    ex = MainMenu('us', 'us')
+    ex = Table('us', 'us', 0, [1,1,1,1,1,1,1,1,1,1,1,1,1,1])
     ex.show()
     sys.exit(app.exec())
