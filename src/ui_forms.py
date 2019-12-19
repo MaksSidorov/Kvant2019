@@ -8,6 +8,10 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
+import datetime
+
+conn = sqlite3.connect('regtab.db')
+c = conn.cursor()
 
 
 # Форма главного окна
@@ -34,6 +38,7 @@ class MainWindowUI(QMainWindow):
         self.regbtn.move(600, 710)
         self.regbtn.setIcon(QIcon('images/other/regbtn.jpg'))
         self.regbtn.setIconSize(QSize(720, 110))
+
 
 # Форма для входа
 class EntFormUI(QWidget):
@@ -121,6 +126,7 @@ class RegFormUI(QWidget):
         self.malebtn.setIcon(QIcon('images/other/male.jpg'))
         self.malebtn.setIconSize(QSize(155, 155))
 
+
 # Меню
 class MainMenuUI(QWidget):
     def __init__(self, *args):
@@ -151,6 +157,7 @@ class MainMenuUI(QWidget):
         self.btn3.setIcon(QIcon('images/other/Win1btn3.jpg'))
         self.btn3.setIconSize(QSize(800, 160))
 
+
 class WarmUI(QWidget):
     def __init__(self, *args):
         super().__init__()
@@ -171,7 +178,7 @@ class WarmUI(QWidget):
         self.btn.setIconSize(QSize(230, 230))
 
 
-class Ex(QWidget):
+class ExUI(QWidget):
     def __init__(self, *args):
         super().__init__()
         self.args = list(args)
@@ -191,11 +198,9 @@ class Ex(QWidget):
         self.btn = QPushButton("Начать", self)
         self.btn.move(1400, 920)
         self.btn.resize(200, 50)
-        self.btn.clicked.connect(self.btnClicked)
         self.nbtn = QPushButton("След", self)
         self.nbtn.move(1700, 920)
         self.nbtn.resize(200, 50)
-        self.nbtn.clicked.connect(self.nbtnClicked)
         self.nbtn.setEnabled(False)
 
         view = QGraphicsView(self)
@@ -236,8 +241,109 @@ class Ex(QWidget):
             self.c2 = 0
 
 
+class FinalUI(QWidget):
+    def __init__(self, *args):
+        super().__init__()
+        self.args = list(args)
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(0, 0, 1920, 980)
+        oImage = QImage("images/Final/" + str(self.args[2]) + ".jpg")
+        sImage = oImage.scaled(QSize(1920, 980))  # resize Image to widgets size
+        palette = QPalette()
+        palette.setBrush(10, QBrush(sImage))  # 10 = Windowrole
+        self.setPalette(palette)
+        self.dimensions = (900, 585)
+        scene = QGraphicsScene(self)
+        pixmap = QPixmap(*self.dimensions)
+        self.pixmapItem = scene.addPixmap(pixmap)
+        self.btn = QPushButton("Начать", self)
+        self.btn.move(1700, 720)
+        self.btn.resize(200, 75)
+        self.nbtn = QPushButton("След", self)
+        self.nbtn.move(1700, 820)
+        self.nbtn.resize(200, 75)
+        self.nbtn.setEnabled(False)
+
+        view = QGraphicsView(self)
+        view.setScene(scene)
+        view.resize(910, 595)
+        view.move(400, 335)
+
+
+class TableUI(QWidget):
+    def __init__(self, *args):
+        super().__init__()
+        self.args = list(args)
+        self.inform = []
+        self.initUI()
+
+    def initUI(self):
+        self.setGeometry(0, 0, 1920, 980)
+        oImage = QImage("images/other/table.jpg")
+        sImage = oImage.scaled(QSize(1920, 980))  # resize Image to widgets size
+        palette = QPalette()
+        palette.setBrush(10, QBrush(sImage))  # 10 = Windowrole
+        self.setPalette(palette)
+        c.execute(
+            "INSERT INTO inf (login, dataa, o1, o2, o3, o4, o5, o6, o7, o8, happy, angry, sad, fear, surprised, disgust) VALUES ('%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s','%s')" % (
+            self.args[0], datetime.date.today(), *self.args[3]))
+        conn.commit()
+        c.execute('SELECT * FROM inf WHERE login = "{}"'.format(self.args[0]))
+        row = c.fetchone()
+        while row is not None:
+            self.inform.append(list(row)[2:])
+            row = c.fetchone()
+        self.tableWidget = QTableWidget(self)
+        self.tableWidget.resizeColumnsToContents()
+        self.tableWidget.setRowCount(len(self.inform))
+        self.tableWidget.setColumnCount(15)
+        self.tableWidget.move(50, 100)
+        self.tableWidget.resize(1800, 800)
+        self.tableWidget.setHorizontalHeaderLabels(
+            ('дата', 'Упражнение № 1', 'Упражнение № 2', 'Упражнение № 3(Левый глаз)', 'Упражнение № 3(Правый глаз)',
+             'Упражнение № 4(Левая сторона)', 'Упражнение № 4(Правая сторона)', 'Упражнение № 5(Левая сторона)',
+             'Упражнение № 5(Правая сторона)', 'злость', 'отвращение', 'страх', 'радость', 'грусть', 'удивление')
+        )
+        self.tableWidget.setSizeAdjustPolicy(
+            QtWidgets.QAbstractScrollArea.AdjustToContents)
+        for x in range(len(self.inform)):
+            for y in range(len(self.inform[0])):
+                if y == 0:
+                    cellinfo = QTableWidgetItem(str(self.inform[x][y]))
+                    cellinfo.setFlags(
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                    self.tableWidget.setItem(x, y, cellinfo)
+                elif y > 8:
+                    cellinfo = QTableWidgetItem(str(self.inform[x][y]) + '/1')
+                    cellinfo.setFlags(
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                    self.tableWidget.setItem(x, y, cellinfo)
+                    if self.inform[x][y] == 1:
+                        self.tableWidget.item(x, y).setBackground(QColor(0, 255, 0))
+                    else:
+                        self.tableWidget.item(x, y).setBackground(QColor(255, 255, 0))
+                else:
+                    cellinfo = QTableWidgetItem(str(self.inform[x][y]) + '/10')
+                    cellinfo.setFlags(
+                        Qt.ItemIsSelectable | Qt.ItemIsEnabled
+                    )
+                    self.tableWidget.setItem(x, y, cellinfo)
+                    if self.inform[x][y] >= 10:
+                        self.tableWidget.item(x, y).setBackground(QColor(0, 255, 0))
+                    else:
+                        self.tableWidget.item(x, y).setBackground(QColor(255, 255, 0))
+        self.tableWidget.resizeColumnsToContents()
+        self.btn = QPushButton('На главную', self)
+        self.btn.move(1800, 920)
+        self.btn.resize(100, 50)
+
+
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    prog = WarmUI('qq', 'qq', 1)
+    prog = TableUI('dd', 'dd', 0, [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     prog.show()
     sys.exit(app.exec())
